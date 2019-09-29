@@ -1,0 +1,245 @@
+﻿@model ContactsApp.Contact
+
+<link href="~/Content/font-awesome.css" rel="stylesheet" />
+
+<link href="~/Content/DataTables/css/jquery.dataTables.min.css" rel="stylesheet" />
+
+
+<div class="container">
+    <div class="row">
+
+        <div>
+            <div class="col-md-3">
+                <div>
+                    <div>
+                        <div style="margin-bottom: 25px" class="input-group">
+                            <span class="input-group-addon"><i class="fa fa-phone"></i></span>
+                            @*@Html.EnumDropDownListFor(model => model.ContactNumbers.FirstOrDefault().ContactNumberType, htmlAttributes: new { @class = "form-control" })*@
+                            @Html.Editor("Number", new { htmlAttributes = new { @class = "form-control", placeholder = "Add Contact Number..." } })
+                            @Html.ValidationMessage("Number", "", new { @class = "text-danger" })
+                            <span id="addContactNumberId" style="color:blue;cursor:pointer" class="input-group-addon"><i class="fa fa-plus"></i></span>
+                        </div>
+                    </div>
+                    <div>
+                        <table class="table" id="ContactNumberTable">
+                            <thead>
+                                <tr>
+                                    <td>Id</td>
+                                    <th></th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+
+                            @foreach (var item in Model.ContactNumbers)
+                            {
+                        <tr>
+                            <td>@Html.DisplayFor(modelItem => item.Id)</td>
+                            <td>
+                                <a href="tel:+@item.Number">@Html.DisplayFor(modelItem => item.Number)</a>
+</td>
+                            <td>
+                                <a class="fa fa-trash-o" id="deleteContactNumberId" style="color: #428bca;" data-toggle="tooltip" title="Delete" data-id="@item.Id" href="javascript:;" onclick="deleteContactNumber('@item.Id')"></a>
+                            </td>
+                        </tr>
+                            }
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="col-md-3">
+                <div>
+                    <div>
+                        <div style="margin-bottom: 25px" class="input-group wrapper">
+                            <span class="input-group-addon"><i class="fa fa-envelope prefix grey-text"></i></span>
+                            @*<input id="login-username" type="text" class="form-control" name="username" value="" placeholder="Add Email...">*@
+                            @Html.Editor("EmailAddress", new { htmlAttributes = new { @class = "form-control", placeholder = "Add Email..." } })
+                            @Html.ValidationMessage("EmailAddress", "", new { @class = "text-danger" })
+                            <span id="addEmailAddressId" style="color:blue;cursor:pointer" class="input-group-addon" onclick="CreateContactNumber('@Model.Id')"><i class="fa fa-plus"></i></span>
+                        </div>
+                    </div>
+                    <div>
+                        <table class="table" id="EmailTable">
+                            <thead>
+                                <tr>
+                                    <td>Id</td>
+                                    <th></th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+
+                            @foreach (var item in Model.EmailAddresses)
+                            {
+                                <tr>
+                                    <td>@Html.DisplayFor(modelItem => item.Id)</td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.EmailAddress)
+                                    </td>
+                                    <td>
+                                        <a class="fa fa-trash-o" id="deleteEmailAddressId" style="color: #428bca;" data-toggle="tooltip" title="Delete" data-id="@item.Id" href="javascript:;" onclick="deleteEmailAddress('@item.Id')"></a>
+                                    </td>
+                                </tr>
+                            }
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<input type="text" value='@Model.Id' id="contactId" hidden="True" />
+
+<script type="text/javascript">
+
+
+    function deleteContactNumber(value) {
+        var id = $('#contactId').val();
+
+        var thisBody = $(this);
+
+        var table = $('#ContactNumberTable').DataTable();
+
+        var obj = {
+            contactId: id,
+            contactNumberId: value
+        }
+        $.ajax({
+            url: '@Url.Action("DeleteContactNumber", "Contacts")',
+            type: 'POST',
+            contentType: 'application/json; charset-utf-8',
+            data: JSON.stringify(obj),
+            success: function(response) {
+                
+                table
+                    .rows( function ( idx, data, node ) {
+                        return data[0] === value;
+                    } )
+                    .remove()
+                    .draw();
+
+            }
+        });
+    }
+
+    function deleteEmailAddress(value) {
+        var id = $('#contactId').val();
+
+        var thisBody = $(this);
+
+        var table = $('#EmailTable').DataTable();
+
+        var obj = {
+            contactId: id,
+            emailAddressId: value
+        }
+        $.ajax({
+            url: '@Url.Action("DeleteEmailAddress", "Contacts")',
+            type: 'POST',
+            contentType: 'application/json; charset-utf-8',
+            data: JSON.stringify(obj),
+            success: function(response) {
+                
+                table
+                    .rows( function ( idx, data, node ) {
+                        return data[0] === value;
+                    } )
+                    .remove()
+                    .draw();
+
+            }
+        });
+    }
+
+</script>
+
+<script>
+    $(document).ready(function () {
+        console.log("ready!");
+    
+        $('#ContactNumberTable').DataTable({searching: false, info: false, pageLength: 3,  lengthChange: false});
+        $('#EmailTable').DataTable({searching: false, info: false, pageLength: 3,  lengthChange: false});
+
+        $('#addContactNumberId').click(function() {
+            var id = $('#contactId').val();
+
+            var table = $('#ContactNumberTable').DataTable();
+            if ($('#Number').val() === '') {
+                alert("empty box!");
+            } else {
+                var obj = {
+                    contactId: id,
+                    contactNumber: $('#Number').val()
+                }
+                $.ajax({
+                    url: '@Url.Action("AddContactNumber", "Contacts")',
+                    datatype: 'json',
+                    type: 'POST',
+                    contentType: 'application/json; charset-utf-8',
+                    data: JSON.stringify(obj),
+                    success: function(response) {
+                        if (response.status) {
+
+
+                            var action = '<td><a class="fa fa-trash-o" id="deleteContactNumberId" style="color: #428bca;" data-toggle="tooltip" title="Delete" data-id="' + response.id + '" href="javascript:;" onclick="deleteContactNumber(' + response.id + ')"></a></td>';
+
+                            
+                            var item = '<a href="tel:' + $('#Number').val() + '?">' + $('#Number').val() + '</a>';
+
+                            var row = [response.id, item, action];
+                            table.row.add(row).draw(true);
+
+                            $('#Number').val("");
+
+                        }
+                    }
+                });
+            }
+        });
+        
+
+        $('#addEmailAddressId').click(function() {
+            var id = $('#contactId').val();
+
+            var table = $('#EmailTable').DataTable();
+            if ($('#EmailAddress').val() === '') {
+                alert("empty box!");
+            } else {
+                var obj = {
+                    contactId: id,
+                    emailAddress: $('#EmailAddress').val()
+                }
+                $.ajax({
+                    url: '@Url.Action("AddEmailAddress", "Contacts")',
+                    datatype: 'json',
+                    type: 'POST',
+                    contentType: 'application/json; charset-utf-8',
+                    data: JSON.stringify(obj),
+                    success: function(response) {
+                        if (response.status) {
+
+
+                            var action = '<td><a class="fa fa-trash-o" id="deleteEmailAddressId" style="color: #428bca;" data-toggle="tooltip" title="Delete" data-id="' + response.id + '" href="javascript:;" onclick="deleteEmailAddress(' + response.id + ')"></a></td>';
+
+
+                            var item = '<a href="mailto:' + $('#EmailAddress').val() + '?">' + $('#EmailAddress').val() + '</a>';
+
+                            //var email = $('#EmailAddress').val();
+                            var row = [response.id, item, action];
+                            table.row.add(row).draw(true);
+
+                            $('#EmailAddress').val("");
+
+                        }
+                    }
+                });
+            }
+        });
+        
+    });
+</script>
+
